@@ -75,7 +75,7 @@ pair.publicKey();
 
 ##### Step 2
 
-The accounts don't exist unless they have a minimum balance of 1 XLM; you can use the friendbot. Obviously, you need funds in some account to then create accounts from it
+The accounts don't exist unless they have a minimum balance of 1 XLM; you can use the friendbot to test accounts. Obviously, you need funds in some account to then create accounts from it
 
 ```ts
 // The SDK does not have tools for creating test accounts, so you'll have to
