@@ -56,7 +56,7 @@ Prioritizing ease of use and the ability to solve specific problems over the int
 
 #### A little example with Create Account Use Case
 
-Tomo como ejemplo el caso de la [documentacion](https://developers.stellar.org/docs/tutorials/create-account) para crear una cuenta tomando parte de una conversacion real. Imaginemos por un momento un desarrollador de una startup pequeña cuyo proximo trabajo es muy simple, crear una cuenta. El proceso de Stellar, no es complejo, de hecho es muy bueno y esta muy bien explicado, pero en realidad el programador esta interesado más en el como que en el porque. Especialmente cuando el tiempo es un apremiante.
+Taking the [documentation](https://developers.stellar.org/docs/tutorials/create-account) as an example for creating an account, let's consider a snippet of a real conversation. Imagine for a moment a developer from a small startup whose next task is very simple: creating an account. The Stellar process isn't complex; in fact, it's very well-explained. However, the programmer is more interested in the **'WHAT?'** than the **'HOW?'**, especially when time is of the essence.
 
 ##### Step 1
 
@@ -145,6 +145,7 @@ After configuring the module, the developer only needs one line, and all the wor
     return otherThing;
   }
 ```
+
 In some use cases, it's common to start an account with a ready trustline (for example, a stablecoin). That's why stellar-nest, starting from the module configuration, allows you to add an array of 'code:issuer' to automatically establish those trustlines. Additionally, developers can also decide from the module whether they want the accounts to be Sponsored or not.
 
 Furthermore, at any point, the developer may opt not to use the initial configuration but to provide specific configuration through function parameters. For instance, the developer might want a specific account to create another one because it's a different flow in their application. This could be achieved simply by passing the secret key.
@@ -158,21 +159,23 @@ Furthermore, at any point, the developer may opt not to use the initial configur
 ```
 
 #### What about future?
+
 This is a small preview of things that should be possible to do.
 
 ##### Setting up alerts.
+
 The developer might want to have special alerts, such as when one of the main accounts is running low on funds.
 
 ##### Event-driven workflow.
-In some situations, it is preferable not to interact directly with Stellar responses (such as account creation) and instead work on an event-driven basis. This means that when the goal of the method is reached, a particular service of the developer can be triggered.
 
+In some situations, it is preferable not to interact directly with Stellar responses (such as account creation) and instead work on an event-driven basis. This means that when the goal of the method is reached, a particular service of the developer can be triggered.
 
 ```js
     /* The first file  */
   async createAccountWithStellarNest() {
 
     this.accountService.createAccount();
-    
+
     let i = 1n;
     let x = 3n * (10n ** 1020n);
     let pi = x;
@@ -181,7 +184,7 @@ In some situations, it is preferable not to interact directly with Stellar respo
             pi += x / (i + 2n);
             i += 2n;
     }
-    
+
     const doSomething = await businessLogicRelated();
     return otherThing;
   }
@@ -193,10 +196,10 @@ In some situations, it is preferable not to interact directly with Stellar respo
     return otherThing;
   }
 ```
+
 ##### OtherServices
+
 Creation of new services exposed to the developer to satisfy various use cases, such as payments, assets, covering actions for both custodial and non-custodial accounts, and more.
-
-
 
 ## Installation
 
