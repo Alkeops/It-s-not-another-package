@@ -1,9 +1,9 @@
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<p align="center">
+  <a href="https://stellar.org/" target="blank"><img src="https://cdn.sanity.io/images/e2r40yh6/production/502d9b1bbee8c2169cc0eb3d0982ba3bf02ce300-1776x548.png?w=1440&auto=format" width="200" alt="Nest Logo" /></a>
+</p>
 
 > :warning: **Preliminary development stage. Not for production use**. Be careful!
 
