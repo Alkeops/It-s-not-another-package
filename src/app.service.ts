@@ -42,14 +42,14 @@ export class AppService {
 
     return newPair;
   }
-
+  
   async createAccountWithStellarNest() {
     const newPair = await this.accountService.createAccount();
     /* other things to do  */
     return newPair;
   }
 
-  
+  /* Example of event-driven flow */
   @OnEvent(ACCOUNT_CREATED)
   async anotherMethod(pair: Keypair){
     console.log('Account created', pair.publicKey());

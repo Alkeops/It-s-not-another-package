@@ -17,7 +17,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     }),
     StellarModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
-        emitEvents: true,
+        emitEvents: true, 
         account: {
           create: {
             by: 'ISSUER',

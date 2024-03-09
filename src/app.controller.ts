@@ -1,6 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AccountParam } from '@app/stellar-nest/decorators';
+import { AccountParam, BalanceParam } from '@app/stellar-nest/decorators';
 import { AccountResponse } from '@stellar/stellar-sdk/lib/horizon';
 
 @Controller()
@@ -9,23 +9,29 @@ export class AppController {
 
   @Get('')
   async getNews(
-    @AccountParam('account', {accessor: 'headers'}) account: AccountResponse
+    @AccountParam('account', { accessor: 'headers' }) account: AccountResponse,
+    /*  Parameter decorator returns an AccountResponse based on the headers named 'account'. 
+   This leverages pre-module configuration to ensure correct server setup without additional configuration. */
   ): Promise<any> {
     try {
       const account = await this.appService.createAccountWithoutStellarNest();
       const account2 = await this.appService.createAccountWithStellarNest();
-      return {account: account.publicKey(), account2: account2.publicKey()};
+      return { account: account.publicKey(), account2: account2.publicKey() };
     } catch (e) {
       return 'si';
     }
   }
   @Get(':id')
-  async accountFromParam(
-    @AccountParam('id') account: AccountResponse
-  ){
+  async accountFromParam(@AccountParam('id') account: AccountResponse) {
+    /*  Parameter decorator returns an AccountResponse based on the param :id. 
+       This leverages pre-module configuration to ensure correct server setup without additional configuration. */
     return account ? account : 'Account not found';
   }
-
-
+  @Post('/purchase')
+  async purchase(@BalanceParam('id', { assetCode: 'USDC', accessor: 'body' }) balance: string) {
+    if (!balance) return "This account can't purchase"; /* Short circuit return */
+    /* this.appService.registerTransaction(balance.account, body);  etc etc*/
+    /* this.doSomethingLikeSaveTheLog */
+    return balance;
+  }
 }
-

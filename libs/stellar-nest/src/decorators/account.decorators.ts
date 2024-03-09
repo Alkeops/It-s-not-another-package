@@ -5,7 +5,7 @@ import { getRequest } from './utils.decorators';
 import { Keypair } from '@stellar/stellar-sdk';
 
 type Options = {
-  accessor?: 'headers' | 'params';
+  accessor?: 'headers' | 'params' | 'body';
 };
 
 type BalanceOptions = Options & {

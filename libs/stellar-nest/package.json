@@ -2,16 +2,23 @@
   "name": "stellar-nest",
   "version": "0.1.0",
   "description": "An opinionated toolkit for seamless integration of Stellar with NestJS.",
-  "main": "index.js", 
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
+    "@nestjs/event-emitter": "^2.0.4",
     "@stellar/stellar-sdk": "^11.2.2"
   },
-  "keywords": ["nestjs", "stellar","stellar-nest"],
-  "author": {"name": "Alkeops"},
+  "keywords": [
+    "nestjs",
+    "stellar",
+    "stellar-nest"
+  ],
+  "author": {
+    "name": "Alkeops"
+  },
   "license": "MIT"
 }
