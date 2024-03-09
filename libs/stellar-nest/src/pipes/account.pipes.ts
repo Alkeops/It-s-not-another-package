@@ -7,7 +7,7 @@ import { STELLAR_NATIVE } from '../constants';
 
 type Metadata = ArgumentMetadata & {
   data: {
-    accesor: 'headers' | 'params';
+    accessor: 'headers' | 'params';
     assetCode: string;
     name: string;
     type: AccessorTypeEnum;
@@ -21,10 +21,9 @@ export class AccountPipe implements PipeTransform {
     private readonly AccountService: AccountService,
   ) {}
   async transform(value: Request, metadata: Metadata): Promise<Record<string, any>[] | AccountResponse | HorizonApi.BalanceLine[] | null> {
-    const { accesor = null, assetCode = null, name, type = null } = metadata.data;
-    const publicKey = accesor !== 'headers' ? value.params[name] : (value.headers[name] as string); 
-
-
+    const { accessor = null, assetCode = null, name, type = null } = metadata.data;
+    const publicKey = accessor !== 'headers' ? value.params[name] : (value.headers[name] as string); 
+  
     let account = await this.AccountService.getAccount(publicKey);
     if (!type || type === AccessorTypeEnum.DATA || !account) return account;
 

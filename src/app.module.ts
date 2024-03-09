@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { StellarModule } from '@app/stellar-nest';
 import { USDC } from '@app/stellar-nest/enums';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -11,8 +12,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       envFilePath: '.env',
       isGlobal: true,
     }),
+    EventEmitterModule.forRoot({
+      /* Add some conf */
+    }),
     StellarModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
+        emitEvents: true,
         account: {
           create: {
             by: 'ISSUER',

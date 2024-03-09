@@ -1,6 +1,8 @@
+import { ACCOUNT_CREATED } from '@app/stellar-nest/constants';
 import { AccountService } from '@app/stellar-nest/providers';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OnEvent } from '@nestjs/event-emitter';
 import { Asset, BASE_FEE, Horizon, Keypair, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
 
 @Injectable()
@@ -10,7 +12,6 @@ export class AppService {
     private readonly configService: ConfigService,
   ) {}
   async createAccountWithoutStellarNest() {
-    
     const server = new Horizon.Server('https://horizon-testnet.stellar.org');
     const newPair = Keypair.random();
     const parentPair = Keypair.fromSecret(this.configService.get('PARENT_ACCOUNT_SECRET'));
@@ -46,5 +47,13 @@ export class AppService {
     const newPair = await this.accountService.createAccount();
     /* other things to do  */
     return newPair;
+  }
+
+  
+  @OnEvent(ACCOUNT_CREATED)
+  async anotherMethod(pair: Keypair){
+    console.log('Account created', pair.publicKey());
+    /* DO something */
+    return
   }
 }

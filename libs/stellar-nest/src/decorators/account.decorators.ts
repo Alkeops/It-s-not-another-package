@@ -4,19 +4,24 @@ import { AccountPipe } from '../pipes';
 import { getRequest } from './utils.decorators';
 import { Keypair } from '@stellar/stellar-sdk';
 
-type BalanceParamOptions = {
-  accesor?: 'headers' | 'params';
+type Options = {
+  accessor?: 'headers' | 'params';
+};
+
+type BalanceOptions = Options & {
   assetCode: string;
 };
 
 export function BalanceParam(name: string): ParameterDecorator;
-export function BalanceParam(name: string, options: BalanceParamOptions): ParameterDecorator;
-export function BalanceParam(name: string, options?: BalanceParamOptions): ParameterDecorator {
+export function BalanceParam(name: string, options: BalanceOptions): ParameterDecorator;
+export function BalanceParam(name: string, options?: BalanceOptions): ParameterDecorator {
   return getRequest({ name, ...options, type: AccessorTypeEnum.BALANCE }, AccountPipe);
 }
 
-export function AccountParam(name: string): ParameterDecorator {
-  return getRequest({ name }, AccountPipe);
+export function AccountParam(name: string): ParameterDecorator;
+export function AccountParam(name: string, options: Options): ParameterDecorator;
+export function AccountParam(name: string, options?: Options): ParameterDecorator {
+  return getRequest({ name, ...options }, AccountPipe);
 }
 
 export const CreateKeyPair = createParamDecorator(async (data: unknown, ctx: ExecutionContext) => {
@@ -33,5 +38,3 @@ export const CreateTestAccount = createParamDecorator(async (data: unknown, ctx:
   }
   return newPair;
 });
-
-

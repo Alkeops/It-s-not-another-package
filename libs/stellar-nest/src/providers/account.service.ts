@@ -2,11 +2,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Asset, BASE_FEE, Keypair, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
 import { AccountResponse } from '@stellar/stellar-sdk/lib/horizon';
 
-import { INVALID_ACCOUNT_TYPE, INVALID_SECRET, STELLAR_NATIVE, STELLAR_OPTIONS } from '../constants';
+import { ACCOUNT_CREATED, INVALID_ACCOUNT_TYPE, INVALID_SECRET, STELLAR_NATIVE, STELLAR_OPTIONS } from '../constants';
 import { StellarModuleConfig } from '../types';
 
 import { ServerService } from './server.service';
 import { StellarModuleMode } from '../enums';
+import { EmitEvent } from '../decorators/events.decorator';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AccountService {
@@ -16,6 +18,7 @@ export class AccountService {
   constructor(
     @Inject(STELLAR_OPTIONS) private readonly options: StellarModuleConfig,
     private readonly serverService: ServerService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.accountOptions = this.options.account.create;
     this.ownerAccounts = this.options.account.accounts || [];
@@ -32,6 +35,7 @@ export class AccountService {
   }
 
   public async getAccount(accountId: string) {
+    
     const isValid = this.isValidAccount(accountId);
     return isValid ? this.serverService.loadAccount(accountId) : null;
   }
@@ -58,6 +62,7 @@ export class AccountService {
     return [pair, await this.getAccount(pair.publicKey())];
   }
 
+  @EmitEvent(ACCOUNT_CREATED)
   public async createAccount(secret?: string): Promise<Keypair> {
     const newPair = Keypair.random();
     if (!secret && !this.accountOptions.by && this.options.mode === StellarModuleMode.TESTNET) {
