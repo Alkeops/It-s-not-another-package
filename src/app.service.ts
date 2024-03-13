@@ -1,16 +1,18 @@
 import { ACCOUNT_CREATED } from '@app/stellar-nest/constants';
 import { AccountService } from '@app/stellar-nest/providers';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Asset, BASE_FEE, Horizon, Keypair, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
 
 @Injectable()
 export class AppService {
+  private readonly logger = new Logger('AppService');
   constructor(
     private readonly accountService: AccountService,
     private readonly configService: ConfigService,
   ) {}
+
   async createAccountWithoutStellarNest() {
     const server = new Horizon.Server('https://horizon-testnet.stellar.org');
     const newPair = Keypair.random();
@@ -42,7 +44,7 @@ export class AppService {
 
     return newPair;
   }
-  
+
   async createAccountWithStellarNest() {
     const newPair = await this.accountService.createAccount();
     /* other things to do  */
@@ -51,9 +53,12 @@ export class AppService {
 
   /* Example of event-driven flow */
   @OnEvent(ACCOUNT_CREATED)
-  async anotherMethod(pair: Keypair){
-    console.log('Account created', pair.publicKey());
+  async anotherMethod(pair: Keypair) {
     /* DO something */
-    return
+    this.logger.log(
+      'Event received in another method: Account created',
+      `https://stellar.expert/explorer/testnet/account/${pair.publicKey()}`,
+    );
+    return;
   }
 }

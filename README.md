@@ -46,7 +46,7 @@ This package will be centered around use cases rather than small functionalities
 
 Working with use cases enables a clear understanding of what is expected to occur within the system in specific situations.
 
-##### Simplicity and Clarity:
+##### Simplicity:
 
 Working with use cases simplifies the understanding of what is being done, facilitating communication between developers and stakeholders, who may or may not be developers.
 
@@ -56,7 +56,7 @@ Prioritizing ease of use and the ability to solve specific problems over the int
 
 #### A little example with Create Account Use Case
 
-Taking the [documentation](https://developers.stellar.org/docs/tutorials/create-account) as an example for creating an account, let's consider a snippet of a real conversation. Imagine for a moment a developer from a small startup whose next task is very simple: creating an account. The Stellar process isn't complex; in fact, it's very well-explained. However, the programmer is more interested in the **'WHAT?'** than the **'HOW?'**, especially when time is of the essence.
+Taking the [documentation](https://developers.stellar.org/docs/tutorials/create-account) as an example for creating an account. Imagine for a moment a developer from a small startup whose next task is very simple: creating an account. The Stellar process isn't complex; in fact, it's very well-explained. However, the programmer is more interested in the **'WHAT?'** than the **'HOW?'**, especially when time is of the essence.
 
 ##### Step 1
 
@@ -134,7 +134,7 @@ The accounts don't exist unless they have a minimum balance of 1 XLM; you can us
 })();
 ```
 
-#### stellar-nest
+##### stellar-nest
 
 After configuring the module, the developer only needs one line, and all the work is done by stellar-nest in the background. If they don't specify a creator account and the mode is 'TESTNET,' a new account will automatically be created and funded using the friendbot. The developer fulfills their primary goal, the **'WHAT?'** Now they can read a bit about the **'HOW?'**
 
@@ -157,6 +157,21 @@ Furthermore, at any point, the developer may opt not to use the initial configur
     return otherThing;
   }
 ```
+##### Other simple example
+
+A normal environment variable file looks like:
+
+```
+SERVER_PASSPHRASE=
+SERVER_URL=
+
+...OTHERS....
+```
+
+In most cases, they end up being a phrase that is a constant extracted from https://developers.stellar.org/docs/encyclopedia/network-passphrases along with the official URL. Thus, even though the SDK provides those phrases and URLs as constants, it is necessary to have a variable to handle the different environments to avoid comparing the environment and determining based on that.
+
+Stellar Nest proposes working differently. The modes 'PUBLIC' | 'TESTNET' | 'FUTURENET' | 'SANDBOX' | 'STANDALONE' are linked to default configurations. The developer starting their work with Stellar doesn't need more constants as environment variables or implement other flows because Stellar Nest will handle it automatically. As always, they could insert their customized configuration if they prefer it in another way.
+
 
 #### What about future?
 
@@ -171,7 +186,7 @@ The developer might want to have special alerts, such as when one of the main ac
 In some situations, it is preferable not to interact directly with Stellar responses (such as account creation) and instead work on an event-driven basis. This means that when the goal of the method is reached, a particular service of the developer can be triggered.
 
 ```js
-    /* The first file  */
+    /* The call */
   async createAccountWithStellarNest() {
 
     this.accountService.createAccount();

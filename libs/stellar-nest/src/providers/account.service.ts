@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Asset, BASE_FEE, Keypair, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
 import { AccountResponse } from '@stellar/stellar-sdk/lib/horizon';
 
@@ -12,6 +12,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AccountService {
+  private readonly logger = new Logger('stellar-nest');
   private accountOptions: StellarModuleConfig['account']['create'];
   private ownerAccounts: StellarModuleConfig['account']['accounts'];
   private accountsTypes: string[];
@@ -35,7 +36,6 @@ export class AccountService {
   }
 
   public async getAccount(accountId: string) {
-    
     const isValid = this.isValidAccount(accountId);
     return isValid ? this.serverService.loadAccount(accountId) : null;
   }
@@ -64,15 +64,23 @@ export class AccountService {
 
   @EmitEvent(ACCOUNT_CREATED)
   public async createAccount(secret?: string): Promise<Keypair> {
+    this.logger.log('Creating an Account');
     const newPair = Keypair.random();
-    if (!secret && !this.accountOptions.by && this.options.mode === StellarModuleMode.TESTNET) {
+    if (!secret && !this.accountOptions?.by && this.options.mode === StellarModuleMode.TESTNET) {
+      this.logger.log('Funding Account with Friendbot');
       await this.serverService.FriendBot(newPair.publicKey()).catch((e) => e);
+      if(this.options.emitEvents) return newPair;
+      this.logger.log(
+        'Account created and funded with Friendbot.',
+        `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,
+      );
       return newPair;
     }
     if (!this.accountsTypes.includes(this.accountOptions.by))
       throw new Error(
         `${INVALID_ACCOUNT_TYPE} valid types are [${this.accountsTypes.join(', ')}] not ${this.accountOptions.by}`,
       );
+
     const [pair, account] = await this.getAccountFromSecret(
       secret || this.ownerAccounts.find((a) => a.type === this.options.account.create.by)?.secret,
     );
@@ -83,11 +91,12 @@ export class AccountService {
     }).addOperation(
       Operation.createAccount({
         destination: newPair.publicKey(),
-        startingBalance: this.accountOptions.starting.balance || '1',
+        startingBalance: this.accountOptions.starting?.balance || '1',
       }),
     );
 
-    if (this.accountOptions.starting.baseTrustline) {
+    if (this.accountOptions.starting?.baseTrustline) {
+      this.logger.log('Adding Trustlines');
       const trustlines = this.accountOptions.starting.baseTrustline.map((t) => {
         if (typeof t === 'string') return t.split(':');
         return t[this.options.mode || StellarModuleMode.TESTNET].split(':');
@@ -111,6 +120,10 @@ export class AccountService {
 
     await this.serverService.server.submitTransaction(transactionTx).catch((e) => e);
 
+    this.logger.log(
+      'Account created, see in.',
+      `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,
+    );
     return newPair;
   }
 }

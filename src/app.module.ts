@@ -17,21 +17,14 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     }),
     StellarModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
-        emitEvents: true, 
         account: {
-          create: {
-            by: 'ISSUER',
-            starting: {
-              balance: '8',
-              baseTrustline: [USDC],
-            },
-          },
           accounts: [
             {
               public: config.get('PARENT_ACCOUNT_PUBLIC'),
               secret: config.get('PARENT_ACCOUNT_SECRET'),
               type: 'ISSUER',
             },
+            /* ...accounts */
           ],
         },
         mode: 'TESTNET',

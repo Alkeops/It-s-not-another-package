@@ -10,6 +10,6 @@ export type CreateAccountConfig = {
     by?: string,
     starting?: {
         balance: string,
-        baseTrustline: (string | TAssetConfig)[],
+        baseTrustline?: (string | TAssetConfig)[],
     },
 }
