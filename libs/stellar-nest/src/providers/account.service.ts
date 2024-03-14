@@ -118,8 +118,8 @@ export class AccountService {
 
     transactionTx.sign(...signers);
 
-    await this.serverService.server.submitTransaction(transactionTx).catch((e) => e);
-
+    const response = await this.serverService.submitTransaction(transactionTx).catch((e) => e);
+console.log({response})
     this.logger.log(
       'Account created, see in.',
       `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,

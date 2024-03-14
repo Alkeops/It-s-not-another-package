@@ -21,7 +21,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
           create: {
             by: 'OWNER',
             starting: {
-              balance: '1',
+              balance: '4',
               baseTrustline: [USDC],
             },
           },
