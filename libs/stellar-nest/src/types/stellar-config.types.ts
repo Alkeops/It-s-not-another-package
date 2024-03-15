@@ -6,6 +6,7 @@ export type StellarGlobalConfig = {
   emitEvents?: boolean;
   mode: keyof typeof StellarModuleMode;
 };
+
 export type StellarAccountConfig = {
   create?: CreateAccountConfig;
   accounts: AccountConfig[];
@@ -19,8 +20,7 @@ export type StellarModuleConfig = StellarGlobalConfig & {
   server?: StellarServerConfig;
 };
 
-export interface StellarAsyncModuleConfig<T>
-  extends Pick<ModuleMetadata, 'imports'> {
+export interface StellarAsyncModuleConfig<T> extends Pick<ModuleMetadata, 'imports'> {
   useFactory: (...args: any[]) => Promise<T> | T;
   inject?: FactoryProvider['inject'];
 }

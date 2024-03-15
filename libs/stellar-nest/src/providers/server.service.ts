@@ -15,9 +15,6 @@ export class ServerService extends Horizon.Server {
     super(Servers[options.mode || StellarModuleMode.TESTNET]);
     this.serverOptions = this.options.server || null;
   }
-  /* public loadAccount(accountId: string){
-      return this.server.loadAccount(accountId)
-  } */
   public async FriendBot(accountId: string){
     return await fetch(`https://friendbot.stellar.org?addr=${accountId}`);
   }

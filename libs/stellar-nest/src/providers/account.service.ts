@@ -8,7 +8,6 @@ import { StellarModuleConfig } from '../types';
 import { ServerService } from './server.service';
 import { StellarModuleMode } from '../enums';
 import { EmitEvent } from '../decorators/events.decorator';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AccountService {
@@ -19,7 +18,6 @@ export class AccountService {
   constructor(
     @Inject(STELLAR_OPTIONS) private readonly options: StellarModuleConfig,
     private readonly serverService: ServerService,
-    private readonly eventEmitter: EventEmitter2,
   ) {
     this.accountOptions = this.options.account.create;
     this.ownerAccounts = this.options.account.accounts || [];
@@ -69,7 +67,7 @@ export class AccountService {
     if (!secret && !this.accountOptions?.by && this.options.mode === StellarModuleMode.TESTNET) {
       this.logger.log('Funding Account with Friendbot');
       await this.serverService.FriendBot(newPair.publicKey()).catch((e) => e);
-      if(this.options.emitEvents) return newPair;
+      if (this.options.emitEvents) return newPair;
       this.logger.log(
         'Account created and funded with Friendbot.',
         `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,
@@ -119,7 +117,7 @@ export class AccountService {
     transactionTx.sign(...signers);
 
     const response = await this.serverService.submitTransaction(transactionTx).catch((e) => e);
-console.log({response})
+    console.log({ response });
     this.logger.log(
       'Account created, see in.',
       `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,
