@@ -1,5 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Asset, BASE_FEE, Keypair, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
+import {
+  Asset,
+  AuthRequiredFlag,
+  BASE_FEE,
+  Keypair,
+  Networks,
+  Operation,
+  TransactionBuilder,
+} from '@stellar/stellar-sdk';
 import { AccountResponse } from '@stellar/stellar-sdk/lib/horizon';
 
 import { ACCOUNT_CREATED, INVALID_ACCOUNT_TYPE, INVALID_SECRET, STELLAR_NATIVE, STELLAR_OPTIONS } from '../constants';
@@ -12,16 +20,26 @@ import { EmitEvent } from '../decorators/events.decorator';
 @Injectable()
 export class AccountService {
   private readonly logger = new Logger('stellar-nest');
-  private accountOptions: StellarModuleConfig['account']['create'];
-  private ownerAccounts: StellarModuleConfig['account']['accounts'];
+  private accountOptions: StellarModuleConfig['account'];
+  private ownerAccounts: StellarModuleConfig['accounts'];
   private accountsTypes: string[];
   constructor(
     @Inject(STELLAR_OPTIONS) private readonly options: StellarModuleConfig,
     private readonly serverService: ServerService,
   ) {
-    this.accountOptions = this.options.account.create;
-    this.ownerAccounts = this.options.account.accounts || [];
+    this.accountOptions = this.options.account;
+    this.ownerAccounts = this.options.accounts || [];
     this.accountsTypes = this.ownerAccounts.map((a) => a.type);
+  }
+
+  private async getTransactionActors() {
+    const ACTORS = {
+      parent: "",
+      source: "",
+      accountCreated: ""
+    }
+
+
   }
 
   public isValidAccount(accountId: string) {
@@ -60,11 +78,25 @@ export class AccountService {
     return [pair, await this.getAccount(pair.publicKey())];
   }
 
-  @EmitEvent(ACCOUNT_CREATED)
   public async createAccount(secret?: string): Promise<Keypair> {
+    const HOME_DOMAIN = {
+      type: 'setOptions',
+      data: {
+        homeDomain: 'www.marca.com',
+      },
+    };
+
+    if (!this.ownerAccounts && !secret) {
+      throw new Error('Secret is required to create an account'); /* If !accounts & !frienbot
+      ERROR ENUMS <-> for cases
+      operationService ? by configs? sequenceService ? 
+      
+      */
+    }
+
     this.logger.log('Creating an Account');
     const newPair = Keypair.random();
-    if (!secret && !this.accountOptions?.by && this.options.mode === StellarModuleMode.TESTNET) {
+    if (!secret && !this.accountOptions?.parentAccount && this.options.mode === StellarModuleMode.TESTNET) {
       this.logger.log('Funding Account with Friendbot');
       await this.serverService.FriendBot(newPair.publicKey()).catch((e) => e);
       if (this.options.emitEvents) return newPair;
@@ -74,28 +106,36 @@ export class AccountService {
       );
       return newPair;
     }
-    if (!this.accountsTypes.includes(this.accountOptions.by))
+
+    if (!this.accountsTypes.includes(this.accountOptions.parentAccount))
       throw new Error(
-        `${INVALID_ACCOUNT_TYPE} valid types are [${this.accountsTypes.join(', ')}] not ${this.accountOptions.by}`,
+        `${INVALID_ACCOUNT_TYPE} valid types are [${this.accountsTypes.join(', ')}] not ${this.accountOptions.parentAccount}`,
       );
 
     const [pair, account] = await this.getAccountFromSecret(
-      secret || this.ownerAccounts.find((a) => a.type === this.options.account.create.by)?.secret,
+      secret || this.ownerAccounts.find((a) => a.type === this.accountOptions.parentAccount)?.secret,
     );
 
+    /* 2496260762239002 */
+    /*  console.log(account.sequenceNumber()); */ /* Analyze sequence number ??? */
+    /*  const [pair2, account2] = await this.getAccountFromSecret(
+      'SAL65M2RRHDKU5L65MSKVGJEAPDQUBQMNM6VCZEY4XES65V77AKN7X2Y',
+    ); */
+    /* const otherPair = Keypair.random(); */
     const createAccountTx = new TransactionBuilder(account, {
       fee: BASE_FEE,
       networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
     }).addOperation(
       Operation.createAccount({
         destination: newPair.publicKey(),
-        startingBalance: this.accountOptions.starting?.balance || '1',
+        startingBalance: '3' /*,
+          source: pair2.publicKey()  el que da los fondos si es diferente a A, debe firmar */,
       }),
     );
-
-    if (this.accountOptions.starting?.baseTrustline) {
+    /* Si existe sponsorship */
+    if (this.accountOptions?.baseTrustline) {
       this.logger.log('Adding Trustlines');
-      const trustlines = this.accountOptions.starting.baseTrustline.map((t) => {
+      const trustlines = this.accountOptions.baseTrustline.map((t) => {
         if (typeof t === 'string') return t.split(':');
         return t[this.options.mode || StellarModuleMode.TESTNET].split(':');
       });
@@ -109,15 +149,37 @@ export class AccountService {
         );
       });
     }
+    /*'GASM4KCQ6NQFVGMIQFS5SPG5QLERYQTLO4OCWEKJEITBPWJRJWHEJ6MG' 'SDRKLD4BAYRDMICAAIWNYWSPPDECVGXQVM47G7M7SWEAVRCMUQBEUUIK'  */
+    const transactionTx = createAccountTx
+      /*  .addOperation(
+        Operation.endSponsoringFutureReserves({
+          source: newPair.publicKey(),
+        }),
+      ) */ /* solo si existe sponsorship */
+      /*  .addOperation(
+        Operation.createAccount({
+          destination: otherPair.publicKey(),
+          startingBalance: '20',
+        }),
+      ) */
+      .addOperation(
+        Operation.setOptions({
+          source: newPair.publicKey(),
+          homeDomain: 'www.marca.com',
+        }),
+      )
+      .setTimeout(180)
+      .build();
 
-    const transactionTx = createAccountTx.setTimeout(180).build();
-
-    const signers: Keypair[] = this.accountOptions.starting.baseTrustline ? [pair, newPair] : [pair];
+    const signers: Keypair[] = this.accountOptions.baseTrustline
+      ? [pair, newPair]
+      : [
+          pair,
+        ]; /* pair2 firma porque da los fondos, pair1 solo paga los fees, osea que se puede dividir para que la lista solo sea de cuentas creadas sin fees */
 
     transactionTx.sign(...signers);
 
     const response = await this.serverService.submitTransaction(transactionTx).catch((e) => e);
-    console.log({ response });
     this.logger.log(
       'Account created, see in.',
       `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,
@@ -125,3 +187,9 @@ export class AccountService {
     return newPair;
   }
 }
+
+/* 
+  Eliminar sponsorship 
+  Merge account
+
+*/

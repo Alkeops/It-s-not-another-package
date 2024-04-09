@@ -9,13 +9,11 @@ import { StellarModuleMode } from '../enums';
 export class ServerService extends Horizon.Server {
   private serverOptions: StellarModuleConfig['server'];
   public server: Horizon.Server;
-  constructor(
-    @Inject(STELLAR_OPTIONS) private readonly options: StellarModuleConfig,
-  ) {
-    super(Servers[options.mode || StellarModuleMode.TESTNET]);
+  constructor(@Inject(STELLAR_OPTIONS) private readonly options: StellarModuleConfig) {
+    super(options?.server?.url || Servers[options.mode || StellarModuleMode.TESTNET], options?.server?.opts || {});
     this.serverOptions = this.options.server || null;
   }
-  public async FriendBot(accountId: string){
+  public async FriendBot(accountId: string) {
     return await fetch(`https://friendbot.stellar.org?addr=${accountId}`);
   }
 }

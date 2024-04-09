@@ -18,7 +18,7 @@ export class AppController {
       const account2 = await this.appService.createAccountWithStellarNest();
       return 'created';
     } catch (e) {
-      return 'si';
+      return e.message;
     }
   }
   @Get('emit')

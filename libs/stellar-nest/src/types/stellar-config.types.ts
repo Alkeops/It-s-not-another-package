@@ -1,22 +1,32 @@
 import { FactoryProvider, ModuleMetadata } from '@nestjs/common';
 import { StellarModuleMode } from '../enums';
 import { AccountConfig, CreateAccountConfig } from './stellar-accounts.types';
+import { TAssetConfig } from './utils.types';
+import { Horizon } from '@stellar/stellar-sdk';
 
 export type StellarGlobalConfig = {
   emitEvents?: boolean;
   mode: keyof typeof StellarModuleMode;
+  sponsored?: string;
+  accounts?: AccountConfig[];
 };
 
 export type StellarAccountConfig = {
-  create?: CreateAccountConfig;
-  accounts: AccountConfig[];
+  homeDomain?: string;
+  source?: string;
+  sponsored?: boolean | string;
+  baseTrustline?: (string | TAssetConfig)[];
+  startingBalance?: string;
+  parentAccount?:   string;
 };
+
 export type StellarServerConfig = {
   url?: string;
+  opts?: Horizon.Server.Options;
 };
 
 export type StellarModuleConfig = StellarGlobalConfig & {
-  account: StellarAccountConfig;
+  account?: StellarAccountConfig;
   server?: StellarServerConfig;
 };
 
