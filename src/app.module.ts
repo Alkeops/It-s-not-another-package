@@ -26,7 +26,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         ],
         account: {
           parentAccount: 'OWNER',
-          startingBalance: '10',
           baseTrustline: [USDC, config.get('OTHER_ASSET')],
         },
         mode: 'TESTNET',

@@ -34,12 +34,10 @@ export class AccountService {
 
   private async getTransactionActors() {
     const ACTORS = {
-      parent: "",
-      source: "",
-      accountCreated: ""
-    }
-
-
+      parent: '',
+      source: '',
+      accountCreated: '',
+    };
   }
 
   public isValidAccount(accountId: string) {
@@ -79,13 +77,6 @@ export class AccountService {
   }
 
   public async createAccount(secret?: string): Promise<Keypair> {
-    const HOME_DOMAIN = {
-      type: 'setOptions',
-      data: {
-        homeDomain: 'www.marca.com',
-      },
-    };
-
     if (!this.ownerAccounts && !secret) {
       throw new Error('Secret is required to create an account'); /* If !accounts & !frienbot
       ERROR ENUMS <-> for cases
@@ -93,11 +84,8 @@ export class AccountService {
       
       */
     }
-
-    this.logger.log('Creating an Account');
     const newPair = Keypair.random();
     if (!secret && !this.accountOptions?.parentAccount && this.options.mode === StellarModuleMode.TESTNET) {
-      this.logger.log('Funding Account with Friendbot');
       await this.serverService.FriendBot(newPair.publicKey()).catch((e) => e);
       if (this.options.emitEvents) return newPair;
       this.logger.log(
@@ -128,13 +116,13 @@ export class AccountService {
     }).addOperation(
       Operation.createAccount({
         destination: newPair.publicKey(),
-        startingBalance: '3' /*,
+        startingBalance:
+          this.accountOptions.startingBalance || `${1 + (this.accountOptions.baseTrustline.length || 0) * 0.5}` /*,
           source: pair2.publicKey()  el que da los fondos si es diferente a A, debe firmar */,
       }),
     );
     /* Si existe sponsorship */
     if (this.accountOptions?.baseTrustline) {
-      this.logger.log('Adding Trustlines');
       const trustlines = this.accountOptions.baseTrustline.map((t) => {
         if (typeof t === 'string') return t.split(':');
         return t[this.options.mode || StellarModuleMode.TESTNET].split(':');
