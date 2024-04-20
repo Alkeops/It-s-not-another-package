@@ -25,8 +25,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           },
         ],
         account: {
-          parentAccount: 'OWNER',
+          parentAccount: 'ISSUER',
           baseTrustline: [USDC, config.get('OTHER_ASSET')],
+          startingBalance: '5',
+          homeDomain: 'stellar-nest.com',
+          sponsored: 'OWNER'
         },
         mode: 'TESTNET',
       }),

@@ -1,6 +1,6 @@
 import { FactoryProvider, ModuleMetadata } from '@nestjs/common';
 import { StellarModuleMode } from '../enums';
-import { AccountConfig, CreateAccountConfig } from './stellar-accounts.types';
+import { TAccountConfig, TCreateAccountConfig } from './stellar-accounts.types';
 import { TAssetConfig } from './utils.types';
 import { Horizon } from '@stellar/stellar-sdk';
 
@@ -8,7 +8,7 @@ export type StellarGlobalConfig = {
   emitEvents?: boolean;
   mode: keyof typeof StellarModuleMode;
   sponsored?: string;
-  accounts?: AccountConfig[];
+  accounts?: TAccountConfig[];
 };
 
 export type StellarAccountConfig = {
