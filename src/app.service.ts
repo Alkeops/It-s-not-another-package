@@ -46,8 +46,8 @@ export class AppService {
   }
 
   async createAccountWithStellarNest() {
- const newPair = await this.accountService.deleteAccount("SA4I7RPAPZENNFLNP3G6X6BFM62VTGWMB3HG5KSE2LODHRQFQTA5CTUG");
-/*     const newPair = await this.accountService.createAccount(); */
+/*  const newPair = await this.accountService.deleteAccount("SA4I7RPAPZENNFLNP3G6X6BFM62VTGWMB3HG5KSE2LODHRQFQTA5CTUG"); */
+    const newPair = await this.accountService.createAccount();
 /*GAZW4FQTT5TPGMYIVMFBUWPT3PZMVVMHDK3SL7PGDWPISD22EPH42YVQ SA4I7RPAPZENNFLNP3G6X6BFM62VTGWMB3HG5KSE2LODHRQFQTA5CTUG*/
     /* other things to do  */
     return "he";

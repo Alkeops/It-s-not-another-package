@@ -31,7 +31,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           homeDomain: 'stellar-nest.com',
           sponsored: 'OWNER'
         },
-        mode: 'TESTNET',
+        mode: 'PUBLIC',
       }),
       inject: [ConfigService],
     }),

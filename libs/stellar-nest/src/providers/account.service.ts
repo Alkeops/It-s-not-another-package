@@ -236,6 +236,6 @@ export class AccountService {
     transactionTx.sign(pair);
 
     const response = await this.serverService.submitTransaction(transactionTx).catch((e) => e);
-    
+
   }
 }

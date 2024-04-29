@@ -8,14 +8,15 @@ export class AppController {
   private readonly logger = new Logger('App');
   constructor(private readonly appService: AppService) {}
 
-  @Get('')
+  @Get(':account')
   async getNews(
-    @AccountParam('account', { accessor: 'headers' }) account: AccountResponse,
+    @AccountParam('account') account: AccountResponse,
     /*  Parameter decorator returns an AccountResponse based on the headers named 'account'. 
    This leverages pre-module configuration to ensure correct server setup without additional configuration. */
   ): Promise<any> {
     try {
-      const account2 = await this.appService.createAccountWithStellarNest();
+      console.log(account)
+/*       const account2 = await this.appService.createAccountWithStellarNest(); */
       return 'created';
     } catch (e) {
       return e.message;
