@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   Asset,
-  AuthRequiredFlag,
   BASE_FEE,
   Keypair,
   Networks,
@@ -10,7 +9,7 @@ import {
 } from '@stellar/stellar-sdk';
 import { AccountResponse } from '@stellar/stellar-sdk/lib/horizon';
 
-import { ACCOUNT_CREATED, INVALID_ACCOUNT_TYPE, INVALID_SECRET, STELLAR_NATIVE, STELLAR_OPTIONS } from '../constants';
+import { INVALID_ACCOUNT_TYPE, INVALID_SECRET, STELLAR_NATIVE, STELLAR_OPTIONS } from '../constants';
 import { StellarModuleConfig } from '../types';
 
 import { ServerService } from './server.service';
@@ -181,11 +180,62 @@ export class AccountService {
     transactionTx.sign(...this.getSigners(ACTORS));
 
     const response = await this.serverService.submitTransaction(transactionTx).catch((e) => e);
+    console.log(newPair.publicKey(), newPair.secret());
     this.logger.log(
       'Account created, see in.',
       `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,
     );
 
     return newPair;
+  }
+
+  public async deleteAccount(secret: string) {
+    
+  
+    const ACTORS = await this.getTransactionActors();
+    const {
+      parent: [pairParent, accountParent],
+    } = ACTORS;
+
+    const [pair, account] = await this.getAccountFromSecret(secret);
+
+    const deleteAccountTx = new TransactionBuilder(account, {
+      fee: BASE_FEE,
+      networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
+    });
+
+    account.balances.forEach((asset: any) => {
+      if (parseFloat(asset.balance) !== 0 && asset.asset_type !== 'native') {
+        deleteAccountTx.addOperation(
+          Operation.payment({
+            destination: pairParent.publicKey(),
+            asset: new Asset(asset.asset_code, asset.asset_issuer),
+            amount: asset.balance,
+          }),
+        );
+      }
+
+      if (asset.asset_type !== 'native') {
+        deleteAccountTx.addOperation(
+          Operation.changeTrust({
+            asset: new Asset(asset.asset_code, asset.asset_issuer),
+            limit: '0',
+          }),
+        );
+      }
+    });
+
+    deleteAccountTx.addOperation(
+      Operation.accountMerge({
+        destination: pairParent.publicKey(),
+      }),
+    );
+
+    const transactionTx = deleteAccountTx.setTimeout(180).build();
+
+    transactionTx.sign(pair);
+
+    const response = await this.serverService.submitTransaction(transactionTx).catch((e) => e);
+    
   }
 }
