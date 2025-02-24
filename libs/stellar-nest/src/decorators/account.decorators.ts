@@ -1,4 +1,4 @@
-import { ExecutionContext, createParamDecorator } from '@nestjs/common';
+import { createParamDecorator } from '@nestjs/common';
 import { AccessorTypeEnum } from '../enums';
 import { AccountPipe } from '../pipes';
 import { getRequest } from './utils.decorators';
@@ -24,12 +24,12 @@ export function AccountParam(name: string, options?: Options): ParameterDecorato
   return getRequest({ name, ...options }, AccountPipe);
 }
 
-export const CreateKeyPair = createParamDecorator(async (data: unknown, ctx: ExecutionContext) => {
+export const CreateKeyPair = createParamDecorator(async () => {
   const pair = Keypair.random();
   return pair;
 });
 
-export const CreateTestAccount = createParamDecorator(async (data: unknown, ctx: ExecutionContext) => {
+export const CreateTestAccount = createParamDecorator(async () => {
   const newPair = Keypair.random();
   try {
     await fetch(`https://friendbot.stellar.org?addr=${newPair.publicKey()}`);

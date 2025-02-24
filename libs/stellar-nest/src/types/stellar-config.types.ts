@@ -11,12 +11,20 @@ export type StellarAccountConfig = {
   create?: CreateAccountConfig;
   accounts: AccountConfig[];
 };
+
+export type StellarAssetsConfig = {
+  create?: {
+    by: string;
+    distributorAccount: string;
+  };
+};
 export type StellarServerConfig = {
   url?: string;
 };
 
 export type StellarModuleConfig = StellarGlobalConfig & {
   account: StellarAccountConfig;
+  assets: StellarAssetsConfig;
   server?: StellarServerConfig;
 };
 

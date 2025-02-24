@@ -16,9 +16,9 @@ export class AppController {
   ): Promise<any> {
     try {
       const account2 = await this.appService.createAccountWithStellarNest();
-      return 'created';
+      return account2;
     } catch (e) {
-      return 'si';
+      return e.message;
     }
   }
   @Get('emit')
@@ -28,9 +28,9 @@ export class AppController {
    This leverages pre-module configuration to ensure correct server setup without additional configuration. */
   ): Promise<any> {
     try {
-      this.logger.log('Requesting account creation')
+      this.logger.log('Requesting account creation');
       const account2 = this.appService.createAccountWithStellarNest();
-      this.logger.log('Something else to do while creation in the background', 'Exited')
+      this.logger.log('Something else to do while creation in the background', 'Exited');
       return 'created';
     } catch (e) {
       return 'si';

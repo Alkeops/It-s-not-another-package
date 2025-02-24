@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StellarModule } from '@app/stellar-nest';
-import { USDC } from '@app/stellar-nest/enums';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 
@@ -17,12 +16,18 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     }),
     StellarModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
+        assets: {
+          create: {
+            by: 'ISSUER',
+            distributorAccount: 'OWNER',
+          },
+        },
         account: {
           create: {
             by: 'OWNER',
             starting: {
-              balance: '4',
-              baseTrustline: [USDC],
+              balance: '2',
+              baseTrustline: [config.get('OTHER_ASSET')],
             },
           },
           accounts: [
@@ -30,13 +35,34 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
               public: config.get('PARENT_ACCOUNT_PUBLIC'),
               secret: config.get('PARENT_ACCOUNT_SECRET'),
               type: 'ISSUER',
+              signers: [
+                {
+                  public: config.get('ACCOUNT_SIGNER_PUBLIC'),
+                  secret: config.get('ACCOUNT_SIGNER_SECRET'),
+                  type: 'SIGNER',
+                },
+                {
+                  public: config.get('ACCOUNT_SIGNER2_PUBLIC'),
+                  secret: config.get('ACCOUNT_SIGNER2_SECRET'),
+                  type: 'SIGNER',
+                },
+                {
+                  public: config.get('ACCOUNT_SIGNER3_PUBLIC'),
+                  secret: config.get('ACCOUNT_SIGNER3_SECRET'),
+                  type: 'SIGNER',
+                },
+                {
+                  public: config.get('ACCOUNT_SIGNER4_PUBLIC'),
+                  secret: config.get('ACCOUNT_SIGNER4_SECRET'),
+                  type: 'SIGNER',
+                },
+              ],
             },
             {
               public: config.get('OWNER_ACCOUNT_PUBLIC'),
               secret: config.get('OWNER_ACCOUNT_SECRET'),
               type: 'OWNER',
             },
-            /* ...accounts */
           ],
         },
         mode: 'TESTNET',
