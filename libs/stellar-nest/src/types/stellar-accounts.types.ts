@@ -12,5 +12,6 @@ export type CreateAccountConfig = {
   starting?: {
     balance: string;
     baseTrustline?: (string | TAssetConfig)[];
+    homeDomain?: string;
   };
 };

@@ -96,42 +96,50 @@ export class AppService {
       },
     ); */
     /* other things to do  */
-    /* await this.assetsService.createAsset({
-      assetName: 'USDC',
-      amount: 4000,
+    /*  const e = await this.assetsService.createAsset({
+      assetName: 'UN0004',
+      amount: 400000,
     }); */
-    const e = await this.paymentService.sendPayment([
-      {
-        asset: 'VIEW63:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
-        amount: 1,
-        from: 'OWNER',
-        to: {
-          publicKey: 'GD3UFOSYPBYKPX7ATMTRJIK2EOLKQOUZHOBOQFVPB3Q2Z7NZ5DPKBN22',
-          secretKey: 'SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV',
+    const e = await this.paymentService.sendPayment(
+      [
+        {
+          asset: 'VIEW62:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
+          amount: 1,
+          to: {
+            secretKey: 'SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV',
+          },
+          trustline: 'OWNER',
         },
-        trustline: {
-          check: true,
-          sponsor: 'ISSUER',
+        {
+          asset: 'MXNC:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
+          amount: 20,
+          to: {
+            secretKey: 'SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV',
+          },
+          trustline: 'OWNER',
         },
-      } /* 
-      {
-        asset: 'XLM',
-        amount: 0.5,
-        from: 'SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV',
-        to: {
-          publicKey: 'GC2WZEBJ5WT7J3WXUERXFOD3SRLDU3BJZIQ6XVBTQPMZFDSKMRQHVDR2',
+        {
+          asset: 'UN0004:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
+          amount: 600,
+          to: {
+            secretKey: 'SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV',
+          },
+          trustline: 'OWNER',
         },
-      }, */,
-    ]);
+      ],
+      'SB5SUGIGVNLA4PUF4IDS3X6Z6CLT6U346I7AZ5PAQ6RHCRZT36GW3GS3',
+    );
 
-    /*  const newPair = await this.accountService.createAccount();
+    /* const e = await this.accountService.createAccount();
 
-    this.logger.log(newPair.publicKey(), newPair.secret()); */
+    this.logger.log(e.publicKey(), e.secret()); */
     return { e };
   }
 }
 
 /* 
+
+check trnasfer status
 GD3UFOSYPBYKPX7ATMTRJIK2EOLKQOUZHOBOQFVPB3Q2Z7NZ5DPKBN22
 SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV
 

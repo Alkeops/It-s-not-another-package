@@ -75,12 +75,9 @@ export class AssetsService {
         );
     }
     const transactionTx = createAssetTx.setTimeout(180).build();
-    const transactionSigned = this.signersService.signTransaction(
-      transactionTx,
-      this.assetsOptions.by ? [] : [sourcePair],
-    );
-    await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
-    this.logger.log(`Asset ${assetName} created`);
+    const transactionSigned = this.signersService.signTransaction(transactionTx, [sourcePair]);
+    const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
+    this.logger.log(`Asset ${assetName} created `, response);
     return true;
   }
 }

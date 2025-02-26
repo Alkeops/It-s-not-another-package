@@ -69,6 +69,15 @@ export class AccountService {
       }),
     );
 
+    if (this.accountOptions.starting?.homeDomain) {
+      createAccountTx.addOperation(
+        Operation.setOptions({
+          homeDomain: this.accountOptions.starting.homeDomain,
+          source: newPair.publicKey(),
+        }),
+      );
+    }
+
     if (this.accountOptions.starting?.baseTrustline) {
       this.logger.log('Adding Trustlines');
       const trustlines = this.accountOptions.starting.baseTrustline.map((t) => {

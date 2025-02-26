@@ -9,15 +9,11 @@ import { PaymentUtilsService } from './payment-utils.service';
 import { SignersService } from '../signers.service';
 
 type TPayment = {
-  from: string;
   asset: string;
   amount: number;
   memo?: string | Uint8Array | number;
   to: { publicKey?: string; secretKey?: string };
-  trustline?: {
-    check: boolean;
-    sponsor?: string;
-  };
+  trustline?: string;
 };
 
 type TSender = {
@@ -47,11 +43,11 @@ export class PaymentService {
     return new Asset(asset.split(':')[0], asset.split(':')[1]);
   }
 
-  public async sendPayment(payments: TPayment[], feeBump?: boolean) {
+  public async sendPayment(payments: TPayment[], from: string, feeBump?: boolean) {
     if (!payments.length) throw new Error('No payments to send');
 
     const { max = BASE_FEE } = await this.serverService.getFees();
-    const [sourcePair, sourceAccount] = await this.accountUtilsService.getAccountFromSecret(payments[0].from);
+    const [sourcePair, sourceAccount] = await this.accountUtilsService.getAccountFromSecret(from);
 
     const sendAssetTransaction = new TransactionBuilder(sourceAccount, {
       fee: max,
@@ -59,27 +55,28 @@ export class PaymentService {
     });
     let extraSigners: Keypair[] = [sourcePair];
 
-    for (const { from, asset, amount, to, memo, trustline = null } of payments) {
+    for (const { asset, amount, to, memo, trustline = null } of payments) {
       const ASSET = this.getAsset(asset);
 
       if (!this.paymentUtilsService.validateAssetBalance(from, ASSET, amount)) {
         throw new Error('Insufficient balance');
       }
+      const publicKey = to.secretKey ? Keypair.fromSecret(to.secretKey).publicKey() : to.publicKey;
+      const hasTrustline = await this.accountUtilsService.getBalances(publicKey, ASSET.code);
 
-      const hasTrustline = await this.accountUtilsService.getBalances(to.publicKey, ASSET.code);
-
-      if (trustline?.check && !hasTrustline && to.secretKey) {
-        const balances: any = await this.accountUtilsService.getBalances(to.publicKey);
+      if (!hasTrustline && to.secretKey && asset !== 'XLM') {
+        const balances: any = await this.accountUtilsService.getBalances(publicKey);
         const xlm = parseFloat((balances.find((b) => b.asset_type === 'native') || { balance: 0 }).balance);
-        const xlmUsed = (balances.filter((b) => b.asset_type !== 'native') || []).length * 0.5;
-        if (xlm < xlmUsed + 1.5 && !trustline.sponsor) {
+        const xlmUsed = (balances.filter((b) => b.asset_type !== 'native') || []).length * 0.6;
+        if (xlm < xlmUsed + 1.5 && !trustline) {
           throw new Error('Insufficient balance');
         }
-        if (trustline.sponsor && xlm < xlmUsed + 2) {
-          const sponsor = this.ownerAccounts.find((a) => a.type === trustline.sponsor);
+        if (trustline && xlm < xlmUsed + 2) {
+          const sponsor = this.ownerAccounts.find((a) => a.type === trustline);
+          console.log(xlm, xlmUsed, trustline, sponsor.public);
           sendAssetTransaction.addOperation(
             Operation.payment({
-              destination: to.publicKey,
+              destination: publicKey,
               asset: Asset.native(),
               amount: '0.5',
               source: sponsor.public,
@@ -90,14 +87,14 @@ export class PaymentService {
         sendAssetTransaction.addOperation(
           Operation.changeTrust({
             asset: ASSET,
-            source: to.publicKey,
+            source: publicKey,
           }),
         );
       }
 
       sendAssetTransaction.addOperation(
         Operation.payment({
-          destination: to.publicKey,
+          destination: publicKey,
           asset: ASSET,
           amount: amount.toString(),
         }),
@@ -119,8 +116,8 @@ export class PaymentService {
     return transaction.hash().toString('hex');
   }
 
-  public async sendHighPriorityPayment({ from, asset, amount, memo, to }: TPayment, feePayer?: string) {
-    const transaction = await this.sendPayment([{ from, asset, amount, memo, to }], true);
+  public async sendHighPriorityPayment({ asset, amount, memo, to }: TPayment, from: string, feePayer?: string) {
+    const transaction = await this.sendPayment([{ asset, amount, memo, to }], from, true);
     if (typeof transaction === 'string') {
       return transaction;
     }
@@ -138,11 +135,11 @@ export class PaymentService {
     return transaction.hash().toString('hex');
   }
 
-  public async sendPaymentFeeBump(payments: TPayment[], feePayer: string) {
+  public async sendPaymentFeeBump(payments: TPayment[], from: string, feePayer: string) {
     if (!feePayer || !payments.length) {
       return false;
     }
-    const transaction = await this.sendPayment(payments, true);
+    const transaction = await this.sendPayment(payments, from, true);
     if (typeof transaction === 'string') {
       return transaction;
     }
@@ -151,7 +148,7 @@ export class PaymentService {
 
     const feeBumpTx = TransactionBuilder.buildFeeBumpTransaction(
       Keypair.fromSecret(source),
-      max,
+      `${+max * 2}`,
       transaction,
       Networks[this.options.mode || StellarModuleMode.TESTNET],
     );

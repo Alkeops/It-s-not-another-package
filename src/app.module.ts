@@ -26,6 +26,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
           create: {
             by: 'OWNER',
             starting: {
+              homeDomain: 'test.com',
               balance: '2',
               baseTrustline: [config.get('OTHER_ASSET')],
             },
