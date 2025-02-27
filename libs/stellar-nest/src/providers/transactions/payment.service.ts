@@ -46,11 +46,11 @@ export class PaymentService {
   public async sendPayment(payments: TPayment[], from: string, feeBump?: boolean) {
     if (!payments.length) throw new Error('No payments to send');
 
-    const { max = BASE_FEE } = await this.serverService.getFees();
+    const { base = BASE_FEE } = await this.serverService.getFees();
     const [sourcePair, sourceAccount] = await this.accountUtilsService.getAccountFromSecret(from);
 
     const sendAssetTransaction = new TransactionBuilder(sourceAccount, {
-      fee: max,
+      fee: base,
       networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
     });
     let extraSigners: Keypair[] = [sourcePair];
@@ -148,7 +148,7 @@ export class PaymentService {
 
     const feeBumpTx = TransactionBuilder.buildFeeBumpTransaction(
       Keypair.fromSecret(source),
-      `${+max * 2}`,
+      max,
       transaction,
       Networks[this.options.mode || StellarModuleMode.TESTNET],
     );

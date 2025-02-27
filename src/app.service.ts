@@ -100,21 +100,21 @@ export class AppService {
       assetName: 'UN0004',
       amount: 400000,
     }); */
-    const e = await this.paymentService.sendPayment(
+    /* await this.paymentService.sendPaymentFeeBump(
       [
         {
-          asset: 'VIEW62:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
+          asset: 'UN0004:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
           amount: 1,
           to: {
-            secretKey: 'SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV',
+            secretKey: 'SDT3XL4ZH3S6MM3NAG7EUKL2E3PH2BPIIT7D73RN6GF6VRPOEQNYV666',
           },
           trustline: 'OWNER',
         },
         {
-          asset: 'MXNC:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
+          asset: 'UN0004:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
           amount: 20,
           to: {
-            secretKey: 'SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV',
+            secretKey: 'SDSAN7H5QKCMR54K3VHMBOS3AZC5K6AGWHRSN5426O43E2JXPR6KFEVL',
           },
           trustline: 'OWNER',
         },
@@ -122,14 +122,21 @@ export class AppService {
           asset: 'UN0004:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
           amount: 600,
           to: {
-            secretKey: 'SCOFFH6QNQ7E7BEPNUXBXGGDJTB54QUJQYQGLRIF7KIROIZCN5TJ3PKV',
+            secretKey: 'SD4IYMB6XOPW332HONFIYHYRFG6U7KRUWG2LGS2YN6D6IHSYGLAEHSO7',
           },
           trustline: 'OWNER',
         },
       ],
       'SB5SUGIGVNLA4PUF4IDS3X6Z6CLT6U346I7AZ5PAQ6RHCRZT36GW3GS3',
-    );
+      'ISSUER',
+    ); */
+    /* const e = await this.assetsService.clawbackAsset(
+      'GD3UFOSYPBYKPX7ATMTRJIK2EOLKQOUZHOBOQFVPB3Q2Z7NZ5DPKBN22',
+      'UN0004',
+      '99',
+    ); */
 
+    const e = await this.assetsService.clawbackAllAsset('UN0004');
     /* const e = await this.accountService.createAccount();
 
     this.logger.log(e.publicKey(), e.secret()); */

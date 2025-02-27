@@ -22,6 +22,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
             distributorAccount: 'OWNER',
           },
         },
+        getSecret: async () => console.log('secret'),
         account: {
           create: {
             by: 'OWNER',

@@ -26,6 +26,7 @@ export type StellarModuleConfig = StellarGlobalConfig & {
   account: StellarAccountConfig;
   assets: StellarAssetsConfig;
   server?: StellarServerConfig;
+  getSecret?: () => string[] | Promise<string[]>;
 };
 
 export interface StellarAsyncModuleConfig<T> extends Pick<ModuleMetadata, 'imports'> {

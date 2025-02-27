@@ -80,4 +80,66 @@ export class AssetsService {
     this.logger.log(`Asset ${assetName} created `, response);
     return true;
   }
+  public async clawbackAsset(publicKey: string, assetName: string, amount: string) {
+    const ISSUER = this.ownerAccounts.find((a) => a.type === this.assetsOptions.by)?.secret;
+    const [issuerPair, issuerAccount] = await this.accountUtilsService.getAccountFromSecret(ISSUER);
+    const { max = BASE_FEE } = await this.serverService.getFees();
+    const asset = new Asset(assetName, issuerPair.publicKey());
+    const clawbackTx = new TransactionBuilder(issuerAccount, {
+      fee: max,
+      networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
+    })
+      .addOperation(
+        Operation.clawback({
+          asset,
+          from: publicKey,
+          amount,
+        }),
+      )
+      .setTimeout(180)
+      .build();
+
+    const transactionSigned = this.signersService.signTransaction(clawbackTx, [issuerPair]);
+    const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
+
+    return response;
+  }
+  public async clawbackAllAsset(assetName: string) {
+    await this.options.getSecret();
+    const ISSUER = this.ownerAccounts.find((a) => a.type === this.assetsOptions.by)?.secret;
+    const [issuerPair, issuerAccount] = await this.accountUtilsService.getAccountFromSecret(ISSUER);
+
+    const { max = BASE_FEE } = await this.serverService.getFees();
+    const asset = new Asset(assetName, issuerPair.publicKey());
+
+    const accounts = await this.serverService.accounts().forAsset(asset).limit(90).cursor('0').call();
+
+    if (!accounts.records.length) {
+      return { message: 'No accounts found' };
+    }
+
+    const clawbackTx = new TransactionBuilder(issuerAccount, {
+      fee: max,
+      networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
+    });
+
+    for (const account of accounts.records) {
+      const balance = account.balances.find((b) => (b as any).asset_code === assetName)?.balance;
+      if (!balance || parseFloat(balance) === 0) {
+        continue;
+      }
+      clawbackTx.addOperation(
+        Operation.clawback({
+          asset,
+          from: account.account_id,
+          amount: balance,
+        }),
+      );
+    }
+
+    const transactionSigned = this.signersService.signTransaction(clawbackTx.setTimeout(180).build(), [issuerPair]);
+    const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
+
+    return response;
+  }
 }
