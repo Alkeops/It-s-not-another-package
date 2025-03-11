@@ -1,6 +1,7 @@
 import {
   AccountService,
   AccountUtilsService,
+  AdminService,
   AssetsService,
   AssetsUtilsService,
   ServerService,
@@ -23,6 +24,7 @@ export class AppService {
     private readonly serverService: ServerService,
     private readonly paymentUtilsService: PaymentUtilsService,
     private readonly paymentService: PaymentService,
+    private readonly adminService: AdminService,
   ) {}
 
   async createAccountWithoutStellarNest() {
@@ -60,29 +62,23 @@ export class AppService {
 
   async createAccountWithStellarNest() {
     /*  console.log(await this.serverService.getFees()); */
-    /* const e = await this.paymentService.sendPaymentFeeBump(
-      [
-        {
-          asset: 'USDC:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
-          amount: 1,
-          from: 'SD4IYMB6XOPW332HONFIYHYRFG6U7KRUWG2LGS2YN6D6IHSYGLAEHSO7',
-          to: 'GC2WZEBJ5WT7J3WXUERXFOD3SRLDU3BJZIQ6XVBTQPMZFDSKMRQHVDR2',
-        },
-        {
-          asset: 'USDC:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
-          amount: 1,
-          from: 'SD4IYMB6XOPW332HONFIYHYRFG6U7KRUWG2LGS2YN6D6IHSYGLAEHSO7',
-          to: 'GAK27W77XVAC4B6AA36KC7OZU4763RGRBZZK5HGNM7NFII6KOPBRSHZS',
-        },
-        {
-          asset: 'USDC:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
-          amount: 1,
-          from: 'SD4IYMB6XOPW332HONFIYHYRFG6U7KRUWG2LGS2YN6D6IHSYGLAEHSO7',
-          to: 'GBBLODS4TF6QVXAQCYOBTJASWDSC7Z5JJCS3I2ID27OBXXPFA5HAZTFP',
-        },
-      ],
-      'ISSUER',
-    ); */
+    /* const e = await this.adminService.sendAdminPriorityPayment([
+      {
+        asset: 'CRYPTO:GDLKFAKOLCXRIIVAJNVIJFQFUZCTR4BOHUDIRE2C2CUBB3KI2PNQEXB3',
+        amount: 200,
+        to: { secretKey: 'SD4IYMB6XOPW332HONFIYHYRFG6U7KRUWG2LGS2YN6D6IHSYGLAEHSO7' },
+      },
+      {
+        asset: 'CRYPTO22:GDLKFAKOLCXRIIVAJNVIJFQFUZCTR4BOHUDIRE2C2CUBB3KI2PNQEXB3',
+        amount: 55,
+        to: { secretKey: 'SDSAN7H5QKCMR54K3VHMBOS3AZC5K6AGWHRSN5426O43E2JXPR6KFEVL' },
+      },
+      {
+        asset: 'VIEW63:GDLKFAKOLCXRIIVAJNVIJFQFUZCTR4BOHUDIRE2C2CUBB3KI2PNQEXB3',
+        amount: 21,
+        to: { secretKey: 'SD4IYMB6XOPW332HONFIYHYRFG6U7KRUWG2LGS2YN6D6IHSYGLAEHSO7' },
+      },
+    ]); */
     /* const e = await this.paymentService.swapPayment(
       {
         asset: 'USDC:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
@@ -96,39 +92,21 @@ export class AppService {
       },
     ); */
     /* other things to do  */
-    /*  const e = await this.assetsService.createAsset({
-      assetName: 'UN0004',
-      amount: 400000,
+    /* const e = await this.assetsService.createAsset({
+      assetName: 'CRYPTO22',
+      amount: 1000,
     }); */
-    /* await this.paymentService.sendPaymentFeeBump(
+    /* const e = await this.paymentService.sendHighPriorityPayment(
       [
         {
-          asset: 'UN0004:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
-          amount: 1,
+          asset: 'USDC:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
+          amount: 12.33,
           to: {
             secretKey: 'SDT3XL4ZH3S6MM3NAG7EUKL2E3PH2BPIIT7D73RN6GF6VRPOEQNYV666',
           },
-          trustline: 'OWNER',
-        },
-        {
-          asset: 'UN0004:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
-          amount: 20,
-          to: {
-            secretKey: 'SDSAN7H5QKCMR54K3VHMBOS3AZC5K6AGWHRSN5426O43E2JXPR6KFEVL',
-          },
-          trustline: 'OWNER',
-        },
-        {
-          asset: 'UN0004:GCGIH7JG7XZYKKQEJO6XQIZRB3VYGQR2IMYMSZYLGG44CMDE4JMOQ3I4',
-          amount: 600,
-          to: {
-            secretKey: 'SD4IYMB6XOPW332HONFIYHYRFG6U7KRUWG2LGS2YN6D6IHSYGLAEHSO7',
-          },
-          trustline: 'OWNER',
         },
       ],
       'SB5SUGIGVNLA4PUF4IDS3X6Z6CLT6U346I7AZ5PAQ6RHCRZT36GW3GS3',
-      'ISSUER',
     ); */
     /* const e = await this.assetsService.clawbackAsset(
       'GD3UFOSYPBYKPX7ATMTRJIK2EOLKQOUZHOBOQFVPB3Q2Z7NZ5DPKBN22',
@@ -136,15 +114,55 @@ export class AppService {
       '99',
     ); */
 
-    const e = await this.assetsService.clawbackAllAsset('UN0004');
-    /* const e = await this.accountService.createAccount();
-
+    /* const e = await this.paymentUtilsService.validateTransaction(
+      '3cc596a01cbd75ab7072fb89b87eea8d498bac918aed49c65b363e2574a26b87',
+    ); */
+    /* const e = await this.assetsService.clawbackAllAsset('UN0004'); */
+    const e = await this.accountService.createAccount();
+    /*
     this.logger.log(e.publicKey(), e.secret()); */
-    return { e };
+    /* const e = await this.accountService.addSigners(
+      'GDLKFAKOLCXRIIVAJNVIJFQFUZCTR4BOHUDIRE2C2CUBB3KI2PNQEXB3',
+      [
+        {
+          weight: 1,
+          publicKey: 'GBMWKZEEPX753XHWI2IQOK3I7NGZNDX6QASNGASEU23EZ7JL3PMIETSV',
+        },
+      ],
+      {
+        masterWeight: 2,
+        lowThreshold: 1,
+        medThreshold: 2,
+        highThreshold: 2,
+      },
+    ); */
+    /*  const e = await this.accountService.createDemoAccount(); */
+    return { public: e.publicKey(), secret: e.secret() };
   }
 }
 
-/* 
+/*
+{
+  ISSUER: {
+    "e": "GDLKFAKOLCXRIIVAJNVIJFQFUZCTR4BOHUDIRE2C2CUBB3KI2PNQEXB3",
+    "s": "SBX7VMKGIMYNKNDPGPLLX7PVXQ3A2FOP572J2J3AUTRPH3LLM4R5WE5B"
+}
+   TODO NO TOMAR EN CUENTA SIGNER : {
+    "e": "GAGSPMNRBMVEGVJCVSUKAFR2HMCV26QHH6IND2IR2K3GDRP5M2BZ2LSE",
+    "s": "SC7L4YGVZWSGP5TLV3LB3WVV2VVXPTK2XIZKDAYJJAOYSOYVZZMZJLTX"
+}
+}
+
+{ DISTRIBUTOR --->
+    "public": "GDM7DRGAV76QKMBVU4PBXSEBAYBLVNWA544GBAHAY5TUQAJBOXKBWNAR",
+    "secret": "SAH2PSQKZN6RUX3ZN4MDH3VMJJIZBMUF2HNNFFMJGTE2NE55XK7JYRAW"
+
+  SIGNER ---> 
+    {
+    "public": "GBMWKZEEPX753XHWI2IQOK3I7NGZNDX6QASNGASEU23EZ7JL3PMIETSV",
+    "secret": "SCZ5XWZ3UKEJUNZSMPMWO4DDC7AB2NG2GX2HUYXPPNPR36N2CY357LD6"
+    }
+}
 
 check trnasfer status
 GD3UFOSYPBYKPX7ATMTRJIK2EOLKQOUZHOBOQFVPB3Q2Z7NZ5DPKBN22

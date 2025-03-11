@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Asset, BASE_FEE, Keypair, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
 
 import { INVALID_ACCOUNT_TYPE, STELLAR_OPTIONS } from '../../constants';
@@ -11,9 +11,8 @@ import { SignersService } from '../signers.service';
 
 @Injectable()
 export class AccountService {
-  private readonly logger = new Logger('stellar-nest/account');
-  private accountOptions: StellarModuleConfig['account']['create'];
-  private ownerAccounts: StellarModuleConfig['account']['accounts'];
+  private accountOptions: StellarModuleConfig['account']['config'];
+  private mainAccounts: StellarModuleConfig['account']['accounts'];
   private accountsTypes: string[];
   constructor(
     @Inject(STELLAR_OPTIONS) private readonly options: StellarModuleConfig,
@@ -21,15 +20,15 @@ export class AccountService {
     private readonly accountUtilsService: AccountUtilsService,
     private readonly signersService: SignersService,
   ) {
-    this.accountOptions = this.options.account.create;
-    this.ownerAccounts = this.options.account.accounts || [];
-    this.accountsTypes = this.ownerAccounts.map((a) => a.type);
+    this.accountOptions = this.options.account.config;
+    this.mainAccounts = this.options.account.accounts || [];
+    this.accountsTypes = this.mainAccounts.map((a) => a.type);
   }
 
   private validateAccountType(): void {
-    if (!this.accountsTypes.includes(this.accountOptions.by)) {
+    if (!this.accountsTypes.includes(this.accountOptions.create_by)) {
       throw new Error(
-        `${INVALID_ACCOUNT_TYPE} valid types are [${this.accountsTypes.join(', ')}] not ${this.accountOptions.by}`,
+        `${INVALID_ACCOUNT_TYPE} valid types are [${this.accountsTypes.join(', ')}] not ${this.accountOptions.create_by}`,
       );
     }
     return;
@@ -39,26 +38,21 @@ export class AccountService {
     const newPair = Keypair.random();
 
     if (this.options.mode === StellarModuleMode.TESTNET) {
-      this.logger.log('Funding Account with Friendbot');
       await this.serverService.FriendBot(newPair.publicKey()).catch((e) => e);
-      this.logger.log(
-        'Account created and funded with Friendbot.',
-        `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,
-      );
     }
 
     return newPair;
   }
 
   public async createAccount(secret?: string): Promise<Keypair> {
-    this.logger.log('Creating an Account');
     const newPair = Keypair.random();
 
     this.validateAccountType();
     const { base = BASE_FEE } = await this.serverService.getFees();
-    const [, account] = await this.accountUtilsService.getAccountFromSecret(
-      secret || this.ownerAccounts.find((a) => a.type === this.options.account.create.by)?.secret,
-    );
+    const keyPair = secret
+      ? Keypair.fromSecret(secret)
+      : Keypair.fromPublicKey(this.mainAccounts.find((a) => a.type === this.accountOptions.create_by)?.public);
+    const account = await this.accountUtilsService.getAccount(keyPair.publicKey());
     const createAccountTx = new TransactionBuilder(account, {
       fee: base,
       networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
@@ -79,7 +73,6 @@ export class AccountService {
     }
 
     if (this.accountOptions.starting?.baseTrustline) {
-      this.logger.log('Adding Trustlines');
       const trustlines = this.accountOptions.starting.baseTrustline.map((t) => {
         if (typeof t === 'string') return t.split(':');
         return t[this.options.mode || StellarModuleMode.TESTNET].split(':');
@@ -95,21 +88,21 @@ export class AccountService {
     }
 
     const transactionTx = createAccountTx.setTimeout(180).build();
-    const transaction = this.signersService.signTransaction(transactionTx, [newPair]);
+    const [transaction] = await this.signersService.signTransaction(transactionTx, [
+      newPair,
+      ...(secret ? [keyPair] : []),
+    ]);
     await this.serverService.submitTransaction(transaction).catch((e) => e);
-    this.logger.log(
-      'Account created, see in.',
-      `https://stellar.expert/explorer/testnet/account/${newPair.publicKey()}`,
-    );
+
     return newPair;
   }
 
   public async deleteAccount(secret: string) {
-    if (!this.accountOptions?.by) {
+    if (!this.accountOptions?.create_by) {
       throw new Error('Se debe mandar a alguna cuenta');
     }
     const [keypair, account] = await this.accountUtilsService.getAccountFromSecret(secret);
-    const destination = this.ownerAccounts.find((a) => a.type === this.options.account.create.by)?.public;
+    const destination = this.mainAccounts.find((a) => a.type === this.options.account.config.create_by)?.public;
     const { base = BASE_FEE } = await this.serverService.getFees();
     const transaction = new TransactionBuilder(account, {
       fee: base,
@@ -174,9 +167,9 @@ export class AccountService {
     });
     transaction.addOperation(
       Operation.setOptions({
-        masterWeight: 1,
+        masterWeight: 5,
         lowThreshold: 1,
-        medThreshold: 5,
+        medThreshold: 1,
         highThreshold: 5,
       }),
     );

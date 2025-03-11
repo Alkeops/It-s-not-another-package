@@ -8,14 +8,15 @@ export type StellarGlobalConfig = {
 };
 
 export type StellarAccountConfig = {
-  create?: CreateAccountConfig;
+  config?: CreateAccountConfig;
   accounts: AccountConfig[];
 };
 
 export type StellarAssetsConfig = {
-  create?: {
-    by: string;
-    distributorAccount: string;
+  config?: {
+    create_by: string;
+    pay_by: string;
+    sponsor_by?: string;
   };
 };
 export type StellarServerConfig = {
@@ -24,9 +25,9 @@ export type StellarServerConfig = {
 
 export type StellarModuleConfig = StellarGlobalConfig & {
   account: StellarAccountConfig;
-  assets: StellarAssetsConfig;
+  payments: StellarAssetsConfig;
   server?: StellarServerConfig;
-  getSecret?: () => string[] | Promise<string[]>;
+  getSecrets?: () => Promise<Record<string, any>[]>;
 };
 
 export interface StellarAsyncModuleConfig<T> extends Pick<ModuleMetadata, 'imports'> {

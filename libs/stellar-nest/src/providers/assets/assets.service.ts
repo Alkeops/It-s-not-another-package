@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { StellarModuleConfig } from '../../types';
 import { STELLAR_OPTIONS } from '../../constants';
 import { ServerService } from '../server.service';
@@ -18,9 +18,8 @@ import { StellarModuleMode } from '@app/stellar-nest/enums';
 
 @Injectable()
 export class AssetsService {
-  private readonly logger = new Logger('stellar-nest/assets');
-  private assetsOptions: StellarModuleConfig['assets']['create'];
-  private ownerAccounts: StellarModuleConfig['account']['accounts'];
+  private assetConfig: StellarModuleConfig['payments']['config'];
+  private mainAccounts: StellarModuleConfig['account']['accounts'];
   constructor(
     @Inject(STELLAR_OPTIONS) private readonly options: StellarModuleConfig,
     private readonly assetsUtilsService: AssetsUtilsService,
@@ -28,89 +27,98 @@ export class AssetsService {
     private readonly serverService: ServerService,
     private readonly signersService: SignersService,
   ) {
-    this.assetsOptions = this.options.assets.create;
-    this.ownerAccounts = this.options.account.accounts || [];
+    this.assetConfig = this.options.payments.config;
+    this.mainAccounts = this.options.account.accounts || [];
   }
   public async createAsset({ assetName, amount }: { assetName: string; amount: number }, issuer?: string) {
-    const { base = BASE_FEE } = await this.serverService.getFees();
-
-    const ASSET_ISSUER = issuer || this.ownerAccounts.find((a) => a.type === this.assetsOptions.by)?.secret;
-    const [sourcePair, sourceAccount] = await this.accountUtilsService.getAccountFromSecret(ASSET_ISSUER);
-    if (await this.assetsUtilsService.doesAssetExist(assetName, sourcePair.publicKey())) {
-      throw new Error(`Asset ${assetName} already exists`);
-    }
-    const asset = new Asset(assetName, sourcePair.publicKey());
-    const createAssetTx = new TransactionBuilder(sourceAccount, {
-      fee: base,
-      networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
-    })
-      .addOperation(
-        Operation.setOptions({
-          setFlags: AuthRevocableFlag,
-        }),
-      )
-      .addOperation(
-        Operation.setOptions({
-          setFlags: AuthClawbackEnabledFlag,
-        }),
-      );
-
-    if (this.assetsOptions.distributorAccount && this.assetsOptions.distributorAccount !== this.assetsOptions.by) {
-      const [distributorPair] = await this.accountUtilsService.getAccountFromSecret(
-        this.ownerAccounts.find((a) => a.type === this.assetsOptions.distributorAccount)?.secret,
-      );
-      createAssetTx
+    try {
+      const { base = BASE_FEE } = await this.serverService.getFees();
+      const ASSET_ISSUER = issuer || this.mainAccounts.find((a) => a.type === this.assetConfig.create_by)?.public;
+      const sourceAccount = await this.accountUtilsService.getAccount(ASSET_ISSUER);
+      if (await this.assetsUtilsService.doesAssetExist(assetName, ASSET_ISSUER)) {
+        throw new Error(`Asset ${assetName} already exists`);
+      }
+      const asset = new Asset(assetName, ASSET_ISSUER);
+      const createAssetTx = new TransactionBuilder(sourceAccount, {
+        fee: base,
+        networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
+      })
         .addOperation(
-          Operation.changeTrust({
-            asset,
-            source: distributorPair.publicKey(),
+          Operation.setOptions({
+            setFlags: AuthRevocableFlag,
           }),
         )
         .addOperation(
-          Operation.payment({
-            destination: distributorPair.publicKey(),
-            asset,
-            amount: amount.toString(),
+          Operation.setOptions({
+            setFlags: AuthClawbackEnabledFlag,
           }),
         );
+
+      if (this.assetConfig.pay_by && this.assetConfig.pay_by !== this.assetConfig.create_by) {
+        const DISTRIBUTOR_PUBLIC = this.mainAccounts.find((a) => a.type === this.assetConfig.pay_by).public;
+        createAssetTx
+          .addOperation(
+            Operation.changeTrust({
+              asset,
+              source: DISTRIBUTOR_PUBLIC,
+            }),
+          )
+          .addOperation(
+            Operation.payment({
+              destination: DISTRIBUTOR_PUBLIC,
+              asset,
+              amount: amount.toString(),
+            }),
+          );
+      }
+      const transactionTx = createAssetTx.setTimeout(180).build();
+      const [transactionSigned, validToSign] = await this.signersService.signTransaction(transactionTx);
+      if (!validToSign) {
+        return transactionSigned.toXDR();
+      }
+      await this.serverService.submitTransaction(transactionSigned);
+      return transactionSigned.hash().toString('hex');
+    } catch (e) {
+      return e;
     }
-    const transactionTx = createAssetTx.setTimeout(180).build();
-    const transactionSigned = this.signersService.signTransaction(transactionTx, [sourcePair]);
-    const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
-    this.logger.log(`Asset ${assetName} created `, response);
-    return true;
   }
   public async clawbackAsset(publicKey: string, assetName: string, amount: string) {
-    const ISSUER = this.ownerAccounts.find((a) => a.type === this.assetsOptions.by)?.secret;
-    const [issuerPair, issuerAccount] = await this.accountUtilsService.getAccountFromSecret(ISSUER);
-    const { max = BASE_FEE } = await this.serverService.getFees();
-    const asset = new Asset(assetName, issuerPair.publicKey());
-    const clawbackTx = new TransactionBuilder(issuerAccount, {
-      fee: max,
-      networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
-    })
-      .addOperation(
-        Operation.clawback({
-          asset,
-          from: publicKey,
-          amount,
-        }),
-      )
-      .setTimeout(180)
-      .build();
+    try {
+      const ISSUER = this.mainAccounts.find((a) => a.type === this.assetConfig.create_by)?.public;
+      const issuerAccount = await this.accountUtilsService.getAccount(ISSUER);
+      const { max = BASE_FEE } = await this.serverService.getFees();
+      const asset = new Asset(assetName, ISSUER);
+      const clawbackTx = new TransactionBuilder(issuerAccount, {
+        fee: max,
+        networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
+      })
+        .addOperation(
+          Operation.clawback({
+            asset,
+            from: publicKey,
+            amount,
+          }),
+        )
+        .setTimeout(180)
+        .build();
 
-    const transactionSigned = this.signersService.signTransaction(clawbackTx, [issuerPair]);
-    const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
+      const [transactionSigned, validToSign] = await this.signersService.signTransaction(clawbackTx);
+      if (!validToSign) {
+        return clawbackTx.toXDR();
+      }
+      const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
 
-    return response;
+      return response;
+    } catch (e) {
+      return e;
+    }
   }
   public async clawbackAllAsset(assetName: string) {
-    await this.options.getSecret();
-    const ISSUER = this.ownerAccounts.find((a) => a.type === this.assetsOptions.by)?.secret;
-    const [issuerPair, issuerAccount] = await this.accountUtilsService.getAccountFromSecret(ISSUER);
+    const ISSUER = this.mainAccounts.find((a) => a.type === this.assetConfig.create_by)?.public;
+    const issuerAccount = await this.accountUtilsService.getAccount(ISSUER);
 
     const { max = BASE_FEE } = await this.serverService.getFees();
-    const asset = new Asset(assetName, issuerPair.publicKey());
+    const asset = new Asset(assetName, ISSUER);
 
     const accounts = await this.serverService.accounts().forAsset(asset).limit(90).cursor('0').call();
 
@@ -136,10 +144,16 @@ export class AssetsService {
         }),
       );
     }
-
-    const transactionSigned = this.signersService.signTransaction(clawbackTx.setTimeout(180).build(), [issuerPair]);
+    const finalTransaction = clawbackTx.setTimeout(180).build();
+    const [transactionSigned, validToSign] = await this.signersService.signTransaction(finalTransaction);
+    if (!validToSign) {
+      return finalTransaction.toXDR();
+    }
     const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
-
+    const moreAccounts = await accounts.next();
+    if (moreAccounts?.records?.length) {
+      await this.clawbackAllAsset(assetName);
+    }
     return response;
   }
 }

@@ -6,3 +6,4 @@ export * from './assets/assets-utils.service';
 export * from './assets/assets.service';
 export * from './transactions/payment-utils.service';
 export * from './transactions/payment.service';
+export * from './admin/admin.service';

@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StellarModule } from '@app/stellar-nest';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -11,59 +10,38 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       envFilePath: '.env',
       isGlobal: true,
     }),
-    EventEmitterModule.forRoot({
-      /* Add some conf */
-    }),
     StellarModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
-        assets: {
-          create: {
-            by: 'ISSUER',
-            distributorAccount: 'OWNER',
+        payments: {
+          config: {
+            create_by: 'ISSUER',
+            pay_by: 'DISTRIBUTOR',
+            sponsor_by: 'DISTRIBUTOR',
           },
         },
-        getSecret: async () => console.log('secret'),
         account: {
-          create: {
-            by: 'OWNER',
+          config: {
+            create_by: 'DISTRIBUTOR',
             starting: {
-              homeDomain: 'test.com',
+              homeDomain: 'stellar-nest',
               balance: '2',
               baseTrustline: [config.get('OTHER_ASSET')],
             },
           },
           accounts: [
             {
-              public: config.get('PARENT_ACCOUNT_PUBLIC'),
-              secret: config.get('PARENT_ACCOUNT_SECRET'),
+              public: 'GDLKFAKOLCXRIIVAJNVIJFQFUZCTR4BOHUDIRE2C2CUBB3KI2PNQEXB3',
               type: 'ISSUER',
-              signers: [
-                {
-                  public: config.get('ACCOUNT_SIGNER_PUBLIC'),
-                  secret: config.get('ACCOUNT_SIGNER_SECRET'),
-                  type: 'SIGNER',
-                },
-                {
-                  public: config.get('ACCOUNT_SIGNER2_PUBLIC'),
-                  secret: config.get('ACCOUNT_SIGNER2_SECRET'),
-                  type: 'SIGNER',
-                },
-                {
-                  public: config.get('ACCOUNT_SIGNER3_PUBLIC'),
-                  secret: config.get('ACCOUNT_SIGNER3_SECRET'),
-                  type: 'SIGNER',
-                },
-                {
-                  public: config.get('ACCOUNT_SIGNER4_PUBLIC'),
-                  secret: config.get('ACCOUNT_SIGNER4_SECRET'),
-                  type: 'SIGNER',
-                },
-              ],
+              signers: ['APP_SIGNER'],
             },
             {
-              public: config.get('OWNER_ACCOUNT_PUBLIC'),
-              secret: config.get('OWNER_ACCOUNT_SECRET'),
-              type: 'OWNER',
+              public: 'GDM7DRGAV76QKMBVU4PBXSEBAYBLVNWA544GBAHAY5TUQAJBOXKBWNAR',
+              type: 'DISTRIBUTOR',
+              signers: ['APP_SIGNER'],
+            },
+            {
+              secret: 'SCZ5XWZ3UKEJUNZSMPMWO4DDC7AB2NG2GX2HUYXPPNPR36N2CY357LD6',
+              type: 'APP_SIGNER',
             },
           ],
         },

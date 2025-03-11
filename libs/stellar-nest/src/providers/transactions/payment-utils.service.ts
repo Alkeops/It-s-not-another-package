@@ -24,4 +24,12 @@ export class PaymentUtilsService {
     const floatAmout = parseFloat((balance as { balance: string })?.balance || '0');
     return floatAmout >= amount;
   }
+  public async validateTransaction(id: string) {
+    try {
+      const transaction = await this.serverService.transactions().transaction(id).call();
+      return !!transaction?.successful;
+    } catch (_) {
+      return false;
+    }
+  }
 }
