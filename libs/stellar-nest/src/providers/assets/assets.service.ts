@@ -119,41 +119,43 @@ export class AssetsService {
 
     const { max = BASE_FEE } = await this.serverService.getFees();
     const asset = new Asset(assetName, ISSUER);
+    let moreAccounts = true;
+    let transactions = [];
+    while (moreAccounts) {
+      const accounts = await this.serverService.accounts().forAsset(asset).limit(90).cursor('0').call();
 
-    const accounts = await this.serverService.accounts().forAsset(asset).limit(90).cursor('0').call();
-
-    if (!accounts.records.length) {
-      return { message: 'No accounts found' };
-    }
-
-    const clawbackTx = new TransactionBuilder(issuerAccount, {
-      fee: max,
-      networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
-    });
-
-    for (const account of accounts.records) {
-      const balance = account.balances.find((b) => (b as any).asset_code === assetName)?.balance;
-      if (!balance || parseFloat(balance) === 0) {
-        continue;
+      if (!accounts.records.length) {
+        return { message: 'No accounts found' };
       }
-      clawbackTx.addOperation(
-        Operation.clawback({
-          asset,
-          from: account.account_id,
-          amount: balance,
-        }),
-      );
+
+      const clawbackTx = new TransactionBuilder(issuerAccount, {
+        fee: max,
+        networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
+      });
+
+      for (const account of accounts.records) {
+        const balance = account.balances.find((b) => (b as any).asset_code === assetName)?.balance;
+        if (!balance || parseFloat(balance) === 0) {
+          continue;
+        }
+        clawbackTx.addOperation(
+          Operation.clawback({
+            asset,
+            from: account.account_id,
+            amount: balance,
+          }),
+        );
+      }
+      const finalTransaction = clawbackTx.setTimeout(180).build();
+      const [, validToSign] = await this.signersService.signTransaction(finalTransaction);
+      if (!validToSign) {
+        transactions = [...transactions, finalTransaction.toXDR()];
+      }
+      const extraAccounts = await accounts.next();
+      if (!extraAccounts?.records?.length) moreAccounts = false;
     }
-    const finalTransaction = clawbackTx.setTimeout(180).build();
-    const [transactionSigned, validToSign] = await this.signersService.signTransaction(finalTransaction);
-    if (!validToSign) {
-      return finalTransaction.toXDR();
-    }
-    const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
-    const moreAccounts = await accounts.next();
-    if (moreAccounts?.records?.length) {
-      await this.clawbackAllAsset(assetName);
-    }
-    return response;
+    return true;
+    /* const response = await this.serverService.submitTransaction(transactionSigned).catch((e) => e);
+    return response; */
   }
 }

@@ -61,6 +61,9 @@ export class AppService {
   }
 
   async createAccountWithStellarNest() {
+    const a: any = Keypair.fromSecret('SCI3UTKQYATBUHMNPMVF5INKR7DOCAK4PUCCTYNTEOOHRAUAMOD7TRQK');
+
+    if (a) return { secret: a.secret(), public: a.publicKey() };
     /*  console.log(await this.serverService.getFees()); */
     /* const e = await this.adminService.sendAdminPriorityPayment([
       {

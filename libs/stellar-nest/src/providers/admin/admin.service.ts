@@ -44,7 +44,7 @@ export class AdminService {
     }
   }
 
-  public async sendAdminPayment(payments: TPayment[]) {
+  public async sendAdminPayment(payments: TPayment[], getTransaction?: boolean) {
     const { base = BASE_FEE } = await this.serverService.getFees();
     const account = await this.accountUtilsService.getAccount(this.payBy);
 
@@ -93,14 +93,18 @@ export class AdminService {
     if (!validToSign) {
       return transactionSigned.toXDR();
     }
+    if (getTransaction) {
+      return transactionSigned;
+    }
     await this.serverService.submitTransaction(transactionSigned);
     return transactionSigned.hash().toString('hex');
   }
+
   public async sendAdminPriorityPayment(payments: TPayment[]) {
     if (!payments.length) {
       return false;
     }
-    const transaction = await this.sendAdminPayment(payments);
+    const transaction = await this.sendAdminPayment(payments, true);
     if (typeof transaction === 'string') {
       return transaction;
     }
@@ -146,5 +150,78 @@ export class AdminService {
     const transactionTx = transaction.setTimeout(180).build();
 
     return transactionTx.toXDR();
+  }
+
+  async adminSwap({
+    appSends,
+    userSends,
+    userSecretKey,
+  }: {
+    appSends: { asset: string; amount: number }[];
+    userSends: { asset: string; amount: number }[];
+    userSecretKey: string;
+  }) {
+    const { max = BASE_FEE } = await this.serverService.getFees();
+    const account = await this.accountUtilsService.getAccount(this.payBy);
+
+    const userPair = Keypair.fromSecret(userSecretKey);
+    const swapTransaction = new TransactionBuilder(account, {
+      fee: max,
+      networkPassphrase: Networks[this.options.mode || StellarModuleMode.TESTNET],
+    });
+
+    for (const { asset, amount } of appSends) {
+      const ASSET = getAssetCode(asset);
+      const hasTrustline = await this.accountUtilsService.getBalances(userPair.publicKey(), ASSET.code);
+      if (!hasTrustline && asset !== 'XLM') {
+        const balances: any = await this.accountUtilsService.getBalances(userPair.publicKey());
+        const xlm = parseFloat((balances.find((b) => b.asset_type === 'native') || { balance: 0 }).balance);
+        const xlmUsed = (balances.filter((b) => b.asset_type !== 'native') || []).length * 0.6;
+        if (xlm < xlmUsed + 2) {
+          const sponsor = this.sponsorBy || this.payBy;
+          swapTransaction.addOperation(
+            Operation.payment({
+              destination: userPair.publicKey(),
+              asset: Asset.native(),
+              amount: '0.5',
+              source: sponsor,
+            }),
+          );
+        }
+        swapTransaction.addOperation(
+          Operation.changeTrust({
+            asset: ASSET,
+            source: userPair.publicKey(),
+          }),
+        );
+      }
+      swapTransaction.addOperation(
+        Operation.payment({
+          destination: Keypair.fromSecret(userSecretKey).publicKey(),
+          asset: ASSET,
+          amount: amount.toString(),
+        }),
+      );
+    }
+
+    for (const { asset, amount } of userSends) {
+      const ASSET = getAssetCode(asset);
+      swapTransaction.addOperation(
+        Operation.payment({
+          destination: this.payBy,
+          asset: ASSET,
+          amount: amount.toString(),
+          source: userPair.publicKey(),
+        }),
+      );
+    }
+
+    const transactionTx = swapTransaction.setTimeout(30).build();
+    const [transactionSigned, validToSign] = await this.signersService.signTransaction(transactionTx, [userPair]);
+    if (!validToSign) {
+      return transactionSigned.toXDR();
+    }
+    await this.serverService.submitTransaction(transactionSigned);
+    return transactionSigned.hash().toString('hex');
   }
 }
